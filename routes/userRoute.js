@@ -29,7 +29,7 @@ router.post("/register", (req, res) => {
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
 
-    let user = {
+    let user = { 
       full_name,
       email,
       // We sending the hash value to be stored within the table
@@ -172,17 +172,17 @@ router.get("/",middleware, (req, res) => {
     }
 });
 
-// router.get("/:id", (req, res) => {
-//   try {
-//       con.query(`SELECT * FROM users WHERE user_id = '${req.params.id}}'`, (err, result) => {
-//           if (err) throw err;
-//           res.send(result);
-//       });
-//   } catch (error) {
-//       console.log(error);
-//       res.status(400).send(error)
-//   }
-// });
+router.get("/:id", (req, res) => {
+  try {
+      con.query(`SELECT * FROM users WHERE user_id = '${req.params.id}}'`, (err, result) => {
+          if (err) throw err;
+          res.send(result);
+      });
+  } catch (error) {
+      console.log(error);
+      res.status(400).send(error)
+  }
+});
 
 // router.post("/",(req,res) => {
 //   const user = {
@@ -224,40 +224,31 @@ router.get("/",middleware, (req, res) => {
 // }
 // })
 
-// router.put("/:id",(req,res) => {
-//   const {
-//         email,
-//         password,
-//         full_name,
-//         billing_address,
-//         default_shipping_address,
-//         country,
-//         phone
-//   }=req.body
+router.put("/:id",(req,res) => {
+  const salt = bcrypt.genSaltSync(10);
+  const hash = bcrypt.hashSync(req.body.password, salt);
+  const user = {
+        email: req.body.email,
+        password :hash ,
+        full_name:req.body.full_name,
+        billing_address:req.body.billing_address,
+        default_shipping_address:req.body.default_shipping_address,
+        country:req.body.country,
+        phone:req.body.phone
+  }
 
-// try {
-   
-   
-//     con.query(`UPDATE users SET  
-//     email ="${email}",
-//     password ="${password}",
-//     full_name ="${full_name}",
-//     billing_address ="${billing_address}",
-//     default_shipping_address ="${default_shipping_address}",
-//     country="${country}",
-//     phone ="${phone}"
-//     WHERE user_id ="${req.params.id}"
-    
-    
-//     `, (err, result) => {
-//         if (err) throw err;
-//         res.send(result);
-//     });
-// } catch (error) {
-//   console.log(error);
-//   res.status(400).send(error)
-// }
-// });
+try {   
+   let sql = `UPDATE users SET ? WHERE user_id ="${req.params.id}"`
+    con.query( sql,user  
+    , (err, result) => {
+        if (err) throw err;
+        res.send(result);
+    });
+} catch (error) {
+  console.log(error);
+  res.status(400).send(error)
+}
+});
 
 
 // router.delete("/:id",(req,res)=> {
