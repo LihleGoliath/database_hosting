@@ -5,10 +5,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const middleware = require("../middleware/auth");
 
-
-
-
-
 // Register Route
 // The Route where Encryption starts
 router.post("/register", (req, res) => {
@@ -24,7 +20,7 @@ router.post("/register", (req, res) => {
       billing_address,
       default_shipping_address
     } = req.body;
-
+    console.log(req.body)
     // The start of hashing / encryption
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
@@ -40,19 +36,16 @@ router.post("/register", (req, res) => {
       billing_address,
       default_shipping_address,
     };
+   
     con.query(sql, user, (err, result) => {
       if (err) throw err;
       console.log(result);
       res.send(`User ${(user.full_name, user.email)} created successfully`);
     });
   } catch (error) {
-    console.log(error);
+    console.log(error.message);
   }
 });
-
-
-// Login
-
 
 // Login
 router.post("/login", (req, res) => {
@@ -61,6 +54,7 @@ router.post("/login", (req, res) => {
     let user = {
       email: req.body.email,
     };
+    console.log(user);
     con.query(sql, user, async (err, result) => {
       if (err) throw err;
       if (result.length === 0) {
@@ -105,6 +99,50 @@ router.post("/login", (req, res) => {
     console.log(error);
   }
 });
+
+router.post("/forgotPassword ", (req, res) => {
+  try {
+    let sql = "SELECT * FROM users WHERE ?";
+    let user = {
+      email: req.body.email,
+    };
+    console.log(req.body);
+    con.query(sql, user, async (err, result) => {
+      if (err) throw err;
+      if (result.length === 0) {
+        res.send("Email not found please register");
+      } else {
+        try {
+          const salt = bcrypt.genSaltSync(10);
+          const hash = bcrypt.hashSync(req.body.password, salt);          
+          const user={
+            user_id: result[0].user_id,
+            full_name: result[0].full_name,
+            password:hash,
+            email: result[0].email,
+            user_type: result[0].user_type,
+            phone: result[0].phone,
+            country: result[0].country,
+            billing_address: result[0].billing_address,
+            default_shipping_address: result[0].default_shipping_address,
+          };
+          let sql = `UPDATE users SET ? WHERE user_id ="${req.params.id}"`
+          con.query(sql,user,async (err,result)=>{
+           if (err) throw err
+           res.send("Password Updated!.You can login now")
+          })
+
+        } catch (error) {
+          console.log
+        }         
+        }
+      }
+)}catch (error) {
+    console.log(error);
+  }
+});
+
+
 // Verify
 router.get("/users/verify", (req, res) => {
   const token = req.header("x-auth-token");
@@ -160,7 +198,7 @@ router.get("/users/verify", (req, res) => {
 
 
 
-router.get("/",middleware, (req, res) => {
+router.get("/", (req, res) => {
     try {
         con.query("SELECT * FROM users", (err, result) => {
             if (err) throw err;
@@ -224,7 +262,7 @@ router.get("/:id", (req, res) => {
 // }
 // })
 
-router.put("/:id",(req,res) => {
+router.put("/:id",middleware,(req,res) => {
   const salt = bcrypt.genSaltSync(10);
   const hash = bcrypt.hashSync(req.body.password, salt);
   const user = {
